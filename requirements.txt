@@ -1,0 +1,15 @@
+streamlit
+langchain
+langchain_groq
+langchain_community
+pytesseract
+Pillow
+pdfminer.six
+docx2txt
+faiss-cpu
+sentence-transformers
+unstructured
+torch
+numpy
+tqdm
+requests
