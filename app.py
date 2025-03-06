@@ -204,6 +204,21 @@ user_input = st.chat_input("Type your math question...")
 
 if user_input:
     st.session_state.chat_history.append(HumanMessage(content=user_input))
+
+    # ✅ Display user input immediately
+    st.markdown(f"<div class='user-message'><span>😀 : {user_input}</span></div>", unsafe_allow_html=True)
+
     with st.spinner("Thinking..."):
-        response = chat.invoke([SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history + [HumanMessage(content=user_input)]).content
+        response = ""
+
+        # ✅ If RAG-based QA Chain is available, use it
+        if st.session_state.qa_chain:
+            response = st.session_state.rag_system.query(st.session_state.qa_chain, user_input, st.session_state.chat_history)
+        else:
+            # ✅ Otherwise, use regular chat model
+            full_prompt = [SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history + [HumanMessage(content=user_input)]
+            response = chat.invoke(full_prompt).content
+
+    # ✅ Append AI response and display it immediately
     st.session_state.chat_history.append(AIMessage(content=response))
+    st.markdown(f"<div class='ai-message'><span>🤖 : {response}</span></div>", unsafe_allow_html=True)
