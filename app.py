@@ -101,47 +101,41 @@ st.set_page_config(page_title="AlgebrAI - Math Chatbot", page_icon="🧮", layou
 
 # ✅ Custom Styling for Chat Messages
 st.markdown("""
-        <style>
-        .user-message {
-            background-color: rgb(241, 234, 26);
-            color: black;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-            text-align: left;
-            float: left;
-            clear: both;
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        .ai-message {
-            background-color: rgb(163, 168, 184);
-            color: black;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-            text-align: left;
-            float: left;
-            clear: both;
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    <style>
+    .user-message, .ai-message {
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        text-align: left;
+        clear: both;
+        margin: 5px 0;
+        display: flex;
+        align-items: center;
+    }
+    .user-message {
+        background-color: rgb(241, 234, 26);
+        color: black;
+        float: left;
+    }
+    .ai-message {
+        background-color: rgb(163, 168, 184);
+        color: black;
+        float: right;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 st.title("🔢 AlgebrAI - Advanced Math Assistant")
 st.write("Ask math questions or upload documents/images for analysis.")
 
 # ✅ Session State Initialization
-if 'rag_system' not in st.session_state:
-    st.session_state.rag_system = MultiFormatRAG()
-if 'qa_chain' not in st.session_state:
-    st.session_state.qa_chain = None
-if 'chat_history' not in st.session_state:
+if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
-if 'vectorstore' not in st.session_state:
+if "rag_system" not in st.session_state:
+    st.session_state.rag_system = MultiFormatRAG()
+if "qa_chain" not in st.session_state:
+    st.session_state.qa_chain = None
+if "vectorstore" not in st.session_state:
     st.session_state.vectorstore = None
 
 # ✅ Sidebar for File Uploads
@@ -178,9 +172,6 @@ with st.sidebar:
                 st.success("Documents processed successfully!")
 
 # ✅ Display Chat History Properly
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-
 for msg in st.session_state.chat_history:
     role = "😀" if isinstance(msg, HumanMessage) else "🤖"
     styled_msg = f"""
@@ -188,18 +179,13 @@ for msg in st.session_state.chat_history:
             <span>{role} : {msg.content}</span>
         </div>
     """
-    st.markdown(styled_msg, unsafe_allow_html=True)  # Ensure it's inside the loop
+    st.markdown(styled_msg, unsafe_allow_html=True)
 
 # ✅ Chatbot User Input
 user_input = st.chat_input("Type your math question...")
 
 if user_input:
-    user_message = f"""
-            <div class='user-message'>
-                <span>😀 : {user_input}</span>
-            </div>
-        """
-    st.markdown(user_message, unsafe_allow_html=True)
+    st.session_state.chat_history.append(HumanMessage(content=user_input))
 
     with st.spinner("Thinking..."):
         response = ""
@@ -210,9 +196,5 @@ if user_input:
             response = chat.invoke(full_prompt).content
 
     st.session_state.chat_history.append(AIMessage(content=response))
-    styled_response = f"""
-            <div class="ai-message">
-                  <span>🤖 : {response}</span>
-            </div>
-        """
-    st.markdown(styled_response, unsafe_allow_html=True)
+
+    st.markdown(f"<div class='ai-message'><span>🤖 : {response}</span></div>", unsafe_allow_html=True)
