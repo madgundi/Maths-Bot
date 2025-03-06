@@ -181,6 +181,8 @@ with st.sidebar:
 
             # ✅ Display Extracted Text in Chat
             if text_data.strip():
+                formatted_text = "### Extracted Text:\n\n" + text_data.replace("•", "\n-")  # Convert bullet points
+                formatted_text = formatted_text.replace("\n", "\n\n")  # Add spacing for better readability
                 st.session_state.chat_history.append(AIMessage(content=f"Extracted Text:\n{text_data}"))
                 st.success("Text extracted successfully!")
 
