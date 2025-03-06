@@ -150,16 +150,26 @@ with st.sidebar:
     if uploaded_files and st.button("Process Files"):
         with st.spinner("Processing..."):
             temp_dir = tempfile.mkdtemp()
-            text_data = ""
+            text_data = ""  # Store extracted text
+
             for file in uploaded_files:
                 file_path = os.path.join(temp_dir, file.name)
                 with open(file_path, "wb") as f:
                     f.write(file.getvalue())
+
+                # ✅ Extract text if image
                 if file.type.startswith('image'):
-                    text_data += extract_text_from_image(file_path) + "\n"
+                    extracted_text = extract_text_from_image(file_path)
+                    text_data += extracted_text + "\n"
+
+                # ✅ Extract text if document
                 else:
                     documents = st.session_state.rag_system.load_documents(temp_dir)
                     if documents:
+                        extracted_text = "\n".join([doc.page_content for doc in documents])
+                        text_data += extracted_text + "\n"
+
+                        # ✅ Process into vector embeddings
                         vectorstore = st.session_state.rag_system.process_documents(documents)
                         if vectorstore:
                             st.session_state.vectorstore = vectorstore
@@ -169,9 +179,11 @@ with st.sidebar:
                                 memory=ConversationBufferMemory(memory_key="chat_history", return_messages=True)
                             )
 
-            if text_data:
-                st.session_state.chat_history.append(AIMessage(content=text_data))
-                st.success("Image text extracted successfully!")
+            # ✅ Display Extracted Text in Chat
+            if text_data.strip():
+                st.session_state.chat_history.append(AIMessage(content=f"Extracted Text:\n{text_data}"))
+                st.success("Text extracted successfully!")
+
             elif st.session_state.qa_chain:
                 st.success("Documents processed successfully!")
 
@@ -192,19 +204,6 @@ user_input = st.chat_input("Type your math question...")
 
 if user_input:
     st.session_state.chat_history.append(HumanMessage(content=user_input))
-
-    # Display user message immediately
-    st.markdown(f"<div class='user-message'><span>😀 : {user_input}</span></div>", unsafe_allow_html=True)
-
     with st.spinner("Thinking..."):
-        response = ""
-        if st.session_state.qa_chain:
-            response = st.session_state.rag_system.query(st.session_state.qa_chain, user_input, st.session_state.chat_history)
-        else:
-            full_prompt = [SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history + [HumanMessage(content=user_input)]
-            response = chat.invoke(full_prompt).content
-
+        response = chat.invoke([SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history + [HumanMessage(content=user_input)]).content
     st.session_state.chat_history.append(AIMessage(content=response))
-
-    # Display AI response immediately
-    st.markdown(f"<div class='ai-message'><span>🤖 : {response}</span></div>", unsafe_allow_html=True)
