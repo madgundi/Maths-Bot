@@ -2,7 +2,7 @@ import streamlit as st
 import os
 import tempfile
 import logging
-import pytesseract
+import requests
 from PIL import Image
 from langchain_groq import ChatGroq
 from langchain.schema import HumanMessage, AIMessage, SystemMessage
@@ -15,13 +15,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
-from langchain.prompts import PromptTemplate
-
-# ✅ Configure Tesseract OCR
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"  # Windows only
 
 # ✅ Secure API Key Handling
-API_KEY = "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"
+API_KEY = "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"  # Replace with your Groq API Key
+OCR_API_KEY = "K86466961488957"  # Replace with your OCR.Space API Key
 os.environ["GROQ_API_KEY"] = API_KEY
 
 # ✅ Configure Logging
@@ -36,6 +33,21 @@ You provide detailed, structured, and rigorous explanations, using LaTeX formatt
 
 # ✅ Initialize Chat Model
 chat = ChatGroq(temperature=0.7, model_name="llama3-70b-8192", groq_api_key=API_KEY)
+
+# ✅ Function to Extract Text from Images using OCR.Space API
+def extract_text_from_image(image_path):
+    try:
+        with open(image_path, 'rb') as image_file:
+            response = requests.post(
+                "https://api.ocr.space/parse/image",
+                files={"image": image_file},
+                data={"apikey": OCR_API_KEY, "language": "eng"}
+            )
+        result = response.json()
+        return result.get("ParsedResults", [{}])[0].get("ParsedText", "No text detected.")
+    except Exception as e:
+        logger.error(f"Error extracting text: {str(e)}")
+        return "Error processing image."
 
 # ✅ Class for Document and Image Processing
 class MultiFormatRAG:
@@ -65,17 +77,6 @@ class MultiFormatRAG:
                     logger.error(f"Error loading {file}: {str(e)}")
         return documents
 
-    def analyze_image(self, image_path):
-        try:
-            image = Image.open(image_path).convert("RGB")  # Ensure correct format
-            text = pytesseract.image_to_string(image)
-            if not text.strip():
-                return "No text detected in the image."
-            return text.strip()
-        except Exception as e:
-            logger.error(f"Image Processing Error: {str(e)}")
-            return f"Error processing image: {str(e)}"
-
     def process_documents(self, documents):
         if not documents:
             return None
@@ -89,11 +90,12 @@ class MultiFormatRAG:
 
 # ✅ Initialize Streamlit Page
 st.set_page_config(page_title="AlgebrAI - Math Chatbot", page_icon="🧮", layout="wide")
-# Custom CSS for styling chat
+
+# ✅ Custom Styling for Chat Messages
 st.markdown("""
         <style>
         .user-message {
-            background-color: rgb(241 234 26);
+            background-color: rgb(241, 234, 26);
             color: black;
             padding: 10px;
             border-radius: 10px;
@@ -148,7 +150,7 @@ with st.sidebar:
                 with open(file_path, "wb") as f:
                     f.write(file.getvalue())
                 if file.type.startswith('image'):
-                    text_data += st.session_state.rag_system.analyze_image(file_path) + "\n"
+                    text_data += extract_text_from_image(file_path) + "\n"
                 else:
                     documents = st.session_state.rag_system.load_documents(temp_dir)
                     if documents:
@@ -176,6 +178,7 @@ for msg in st.session_state.chat_history:
                 </div>
             """
     st.markdown(styled_msg, unsafe_allow_html=True)
+
 # ✅ Chatbot User Input
 user_input = st.chat_input("Type your math question...")
 
@@ -190,14 +193,11 @@ if user_input:
     with st.spinner("Thinking..."):
         response = ""
         if st.session_state.qa_chain:
-            # Pass chat history to the model
             response = st.session_state.rag_system.query(st.session_state.qa_chain, user_input, st.session_state.chat_history)
         else:
-            # Use normal chat without file retrieval
             full_prompt = [SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history + [HumanMessage(content=user_input)]
             response = chat.invoke(full_prompt).content
 
-    # Append AI response and display it
     st.session_state.chat_history.append(AIMessage(content=response))
     styled_response = f"""
             <div class="ai-message">
