@@ -177,8 +177,8 @@ with st.sidebar:
             elif st.session_state.qa_chain:
                 st.success("Documents processed successfully!")
 
-# ✅ Display Chat History
-if "chat_history" in st.session_state:
+# ✅ Display Chat History Properly
+if "chat_history" in st.session_state and st.session_state.chat_history:
     for msg in st.session_state.chat_history:
         role = "😀" if isinstance(msg, HumanMessage) else "🤖"
         styled_msg = f"""
@@ -186,7 +186,7 @@ if "chat_history" in st.session_state:
                     <span>{role} : {msg.content}</span>
                 </div>
             """
-        st.markdown(styled_msg, unsafe_allow_html=True)  # Move this inside the loop
+        st.markdown(styled_msg, unsafe_allow_html=True)  # Moved inside the loop
 
 # ✅ Chatbot User Input
 user_input = st.chat_input("Type your math question...")
