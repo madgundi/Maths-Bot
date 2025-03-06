@@ -102,6 +102,10 @@ st.set_page_config(page_title="AlgebrAI - Math Chatbot", page_icon="🧮", layou
 # ✅ Custom Styling for Chat Messages
 st.markdown("""
     <style>
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+    }
     .user-message, .ai-message {
         padding: 10px;
         border-radius: 10px;
@@ -115,12 +119,12 @@ st.markdown("""
     .user-message {
         background-color: rgb(241, 234, 26);
         color: black;
-        float: left;
+        align-self: flex-start;
     }
     .ai-message {
         background-color: rgb(163, 168, 184);
         color: black;
-        float: right;
+        align-self: flex-end;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -172,20 +176,25 @@ with st.sidebar:
                 st.success("Documents processed successfully!")
 
 # ✅ Display Chat History Properly
-for msg in st.session_state.chat_history:
-    role = "😀" if isinstance(msg, HumanMessage) else "🤖"
-    styled_msg = f"""
-        <div class="{'user-message' if role == '😀' else 'ai-message'}">
-            <span>{role} : {msg.content}</span>
-        </div>
-    """
-    st.markdown(styled_msg, unsafe_allow_html=True)
+chat_container = st.container()
+with chat_container:
+    for msg in st.session_state.chat_history:
+        role = "😀" if isinstance(msg, HumanMessage) else "🤖"
+        styled_msg = f"""
+            <div class="{'user-message' if role == '😀' else 'ai-message'}">
+                <span>{role} : {msg.content}</span>
+            </div>
+        """
+        st.markdown(styled_msg, unsafe_allow_html=True)
 
 # ✅ Chatbot User Input
 user_input = st.chat_input("Type your math question...")
 
 if user_input:
     st.session_state.chat_history.append(HumanMessage(content=user_input))
+
+    # Display user message immediately
+    st.markdown(f"<div class='user-message'><span>😀 : {user_input}</span></div>", unsafe_allow_html=True)
 
     with st.spinner("Thinking..."):
         response = ""
@@ -197,4 +206,5 @@ if user_input:
 
     st.session_state.chat_history.append(AIMessage(content=response))
 
+    # Display AI response immediately
     st.markdown(f"<div class='ai-message'><span>🤖 : {response}</span></div>", unsafe_allow_html=True)
