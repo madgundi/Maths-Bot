@@ -186,7 +186,7 @@ if "chat_history" in st.session_state:
                     <span>{role} : {msg.content}</span>
                 </div>
             """
-    st.markdown(styled_msg, unsafe_allow_html=True)
+        st.markdown(styled_msg, unsafe_allow_html=True)  # Move this inside the loop
 
 # ✅ Chatbot User Input
 user_input = st.chat_input("Type your math question...")
