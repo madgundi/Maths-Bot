@@ -178,9 +178,10 @@ with st.sidebar:
                 st.success("Documents processed successfully!")
 
 # ✅ Display Chat History
-for msg in st.session_state.chat_history:
-    role = "😀" if isinstance(msg, HumanMessage) else "🤖"
-    styled_msg = f"""
+if "chat_history" in st.session_state:
+    for msg in st.session_state.chat_history:
+        role = "😀" if isinstance(msg, HumanMessage) else "🤖"
+        styled_msg = f"""
                 <div class="{'user-message' if role == '😀' else 'ai-message'}">
                     <span>{role} : {msg.content}</span>
                 </div>
