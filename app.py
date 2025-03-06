@@ -119,12 +119,12 @@ st.markdown("""
     .user-message {
         background-color: rgb(241, 234, 26);
         color: black;
-        align-self: flex-start;
+        float: right;
     }
     .ai-message {
         background-color: rgb(163, 168, 184);
         color: black;
-        align-self: flex-end;
+        float: left;
     }
     </style>
 """, unsafe_allow_html=True)
