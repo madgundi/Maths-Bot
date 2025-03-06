@@ -17,11 +17,11 @@ from langchain_community.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
 
 # ✅ Secure API Key Handling
-API_KEY = "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"  # Replace with your Groq API Key
-OCR_API_KEY = "K86466961488957"  # Replace with your OCR.Space API Key
+API_KEY = "your_groq_api_key"  # Replace with your Groq API Key
+OCR_API_KEY = "your_ocr_space_api_key"  # Replace with your OCR.Space API Key
 os.environ["GROQ_API_KEY"] = API_KEY
 
-# ✅ Configure Logging
+# ✅ Logging Configuration
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -101,35 +101,27 @@ st.set_page_config(page_title="AlgebrAI - Math Chatbot", page_icon="🧮", layou
 
 # ✅ Custom Styling for Chat Messages
 st.markdown("""
-        <style>
-        .user-message {
-            background-color: rgb(241, 234, 26);
-            color: black;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-            text-align: left;
-            float: left;
-            clear: both;
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        .ai-message {
-            background-color: rgb(163, 168, 184);
-            color: black;
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 70%;
-            text-align: left;
-            float: left;
-            clear: both;
-            margin: 5px 0;
-            display: flex;
-            align-items: center;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    <style>
+    .user-message {
+        background-color: rgb(241, 234, 26);
+        color: black;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        text-align: left;
+        margin: 5px 0;
+    }
+    .ai-message {
+        background-color: rgb(163, 168, 184);
+        color: black;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        text-align: left;
+        margin: 5px 0;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 st.title("🔢 AlgebrAI - Advanced Math Assistant")
 st.write("Ask math questions or upload documents/images for analysis.")
@@ -180,36 +172,14 @@ with st.sidebar:
 # ✅ Display Chat History
 for msg in st.session_state.chat_history:
     role = "😀" if isinstance(msg, HumanMessage) else "🤖"
-    styled_msg = f"""
-                <div class="{'user-message' if role == '😀' else 'ai-message'}">
-                    <span>{role} : {msg.content}</span>
-                </div>
-            """
-    st.markdown(styled_msg, unsafe_allow_html=True)
+    class_name = "user-message" if role == "😀" else "ai-message"
+    st.markdown(f"""<div class="{class_name}">{role} : {msg.content}</div>""", unsafe_allow_html=True)
 
 # ✅ Chatbot User Input
 user_input = st.chat_input("Type your math question...")
 
 if user_input:
-    user_message = f"""
-            <div class='user-message'>
-                <span>😀 : {user_input}</span>
-            </div>
-        """
-    st.markdown(user_message, unsafe_allow_html=True)
-
-    with st.spinner("Thinking..."):
-        response = ""
-        if st.session_state.qa_chain:
-            response = st.session_state.rag_system.query(st.session_state.qa_chain, user_input, st.session_state.chat_history)
-        else:
-            full_prompt = [SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history + [HumanMessage(content=user_input)]
-            response = chat.invoke(full_prompt).content
-
+    st.session_state.chat_history.append(HumanMessage(content=user_input))
+    response = chat.invoke([SystemMessage(content=SYSTEM_PROMPT)] + st.session_state.chat_history).content
     st.session_state.chat_history.append(AIMessage(content=response))
-    styled_response = f"""
-            <div class="ai-message">
-                  <span>🤖 : {response}</span>
-            </div>
-        """
-    st.markdown(styled_response, unsafe_allow_html=True)
+    st.rerun()
