@@ -145,7 +145,7 @@ if "vectorstore" not in st.session_state:
 # ✅ Sidebar for File Uploads
 with st.sidebar:
     st.title("Upload Files")
-    uploaded_files = st.file_uploader("Upload Documents or Images", accept_multiple_files=True, type=['pdf', 'docx', 'txt', 'csv', 'html', 'md', 'png', 'jpg', 'jpeg'])
+    uploaded_files = st.file_uploader("Upload Documents or Images to Extract Text of Maths Problem ", accept_multiple_files=True, type=['pdf', 'docx', 'txt', 'csv', 'html', 'md', 'png', 'jpg', 'jpeg'])
 
     if uploaded_files and st.button("Process Files"):
         with st.spinner("Processing..."):
